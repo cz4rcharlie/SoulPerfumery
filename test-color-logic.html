@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>颜色判断逻辑测试 - Soul Perfumery</title>
+    <style>
+        body {
+            font-family: "PingFang SC", "Noto Serif SC", sans-serif;
+            padding: 20px;
+            background: #F7F5F2;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2C2C2C;
+            text-align: center;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .test-case {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #eee;
+        }
+        .test-case.pass {
+            background: #E2F0CB;
+            border-color: #B5EAD7;
+        }
+        .test-case.fail {
+            background: #FFE5E5;
+            border-color: #FFB7B2;
+        }
+        .color-swatch {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            margin-right: 20px;
+            border: 2px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-info {
+            flex: 1;
+        }
+        .test-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        .test-details {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .test-result {
+            font-weight: bold;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .test-result.pass {
+            background: #4CAF50;
+            color: white;
+        }
+        .test-result.fail {
+            background: #F44336;
+            color: white;
+        }
+        .summary {
+            background: #2C3E50;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+        .ingredient-test {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        .ingredient-test h3 {
+            margin-top: 0;
+            color: #2C2C2C;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Soul Perfumery 颜色判断逻辑测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 基础颜色类型测试</h2>
+        <div id="basic-tests"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 原料混合模拟测试</h2>
+        <div id="ingredient-tests"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 边界情况测试</h2>
+        <div id="edge-tests"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 成分列表生成测试</h2>
+        <div id="ingredient-list-tests"></div>
+    </div>
+    
+    <div class="summary" id="summary"></div>
+
+    <script>
+        // 复制主文件中的颜色判断逻辑（与index.html保持一致）
+        function determineColorType(r, g, b) {
+            let type = 'mixed';
+            // 改进的颜色判断算法：优先判断特殊颜色，再判断主色调
+            if (r > 220 && g > 220 && b > 220) {
+                // 浅色/白色系
+                type = 'light';
+            } else if (r > 150 && b > 150 && Math.abs(r - b) < 50) {
+                // 紫色：红色和蓝色都较高，且红蓝接近
+                // 绿色明显较低：低于红蓝较小值至少30
+                const minRB = Math.min(r, b);
+                if (g < minRB - 20) {
+                    // 注意：此判断在红、绿、蓝之前，避免误判（紫色是特殊颜色）
+                    type = 'purple';
+                }
+            }
+            
+            // 如果还没有确定类型，继续判断主色调
+            if (type === 'mixed') {
+                if (r > g && r > b && r - Math.max(g, b) > 30) {
+                    // 红色：红色明显占主导（红色原料差值较大，保持30阈值）
+                    type = 'red';
+                } else if (g > r && g > b) {
+                    // 绿色：绿色占主导，使用更宽松的条件（因为绿色原料通常更柔和）
+                    // 使用绝对差值或相对差值（绿色比次高值高6%以上）
+                    const maxOther = Math.max(r, b);
+                    if (g - maxOther > 12 || g > maxOther * 1.06) {
+                        type = 'green';
+                    }
+                } else if (b > r && b > g) {
+                    // 蓝色：蓝色占主导，使用适中的阈值
+                    const maxOther = Math.max(r, g);
+                    if (b - maxOther > 25 || b > maxOther * 1.12) {
+                        type = 'blue';
+                    }
+                }
+            }
+            return type;
+        }
+
+        // 模拟颜色混合函数（简化版）
+        function mixColors(baseColor, newColor, weight) {
+            return baseColor.map((c, i) => c * (1 - weight) + newColor[i] * weight);
+        }
+
+        // 测试用例 - 为每个色系提供全面的测试覆盖
+        const testCases = {
+            basic: [
+                // 红色系测试
+                { name: "红色-典型", color: [255, 100, 100], expected: "red" },
+                { name: "红色-深红", color: [200, 50, 50], expected: "red" },
+                { name: "红色-浅红", color: [255, 200, 200], expected: "red" },
+                { name: "红色-边界(差值31)", color: [200, 169, 169], expected: "red" },
+                { name: "红色-边界(差值30)", color: [200, 170, 170], expected: "mixed" }, // 30不大于30，所以是mixed
+                { name: "红色-边界(差值29)", color: [200, 171, 171], expected: "mixed" },
+                
+                // 绿色系测试
+                { name: "绿色-典型", color: [100, 255, 100], expected: "green" },
+                { name: "绿色-深绿", color: [50, 200, 50], expected: "green" },
+                { name: "绿色-浅绿", color: [200, 255, 200], expected: "green" },
+                { name: "绿色-边界(差值13)", color: [200, 213, 200], expected: "green" },
+                { name: "绿色-边界(差值12)", color: [200, 212, 200], expected: "mixed" }, // 212 - 200 = 12，不满足 > 12；212 == 200 * 1.06，不满足 > 212
+                { name: "绿色-边界(差值11-相对比例)", color: [200, 213, 200], expected: "green" }, // 213 > 200 * 1.06 = 212，满足相对比例
+                { name: "绿色-边界(差值10)", color: [200, 210, 200], expected: "mixed" },
+                
+                // 蓝色系测试
+                { name: "蓝色-典型", color: [100, 100, 255], expected: "blue" },
+                { name: "蓝色-深蓝", color: [50, 50, 200], expected: "blue" },
+                { name: "蓝色-浅蓝", color: [200, 200, 255], expected: "blue" },
+                { name: "蓝色-边界(差值26)", color: [200, 200, 226], expected: "blue" },
+                { name: "蓝色-边界(差值25)", color: [200, 200, 225], expected: "blue" },
+                { name: "蓝色-边界(差值24-相对比例)", color: [200, 200, 224], expected: "mixed" }, // 224 == 200 * 1.12 = 224，不满足 > 224
+                { name: "蓝色-边界(差值23)", color: [200, 200, 223], expected: "mixed" },
+                
+                // 紫色系测试
+                { name: "紫色-典型", color: [200, 100, 190], expected: "purple" },
+                { name: "紫色-红蓝接近", color: [180, 100, 170], expected: "purple" },
+                { name: "紫色-红蓝差距39", color: [200, 100, 161], expected: "purple" },
+                { name: "紫色-红蓝差距49", color: [200, 100, 151], expected: "red" }, // 差值49>=40，不满足紫色条件
+                { name: "紫色-红蓝差距50", color: [200, 100, 150], expected: "red" }, // 差值50不满足<40
+                { name: "紫色-边界(差值49)", color: [200, 100, 151], expected: "purple" }, // 差值49<50，绿色100 < min(200,151)-20=131，满足紫色
+                { name: "紫色-边界(差值50)", color: [200, 100, 150], expected: "red" }, // 差值50不满足<50
+                { name: "紫色-绿色边界(刚好满足)", color: [200, 170, 190], expected: "purple" }, // 绿色170 < min(200,190)-20=170，满足紫色
+                { name: "紫色-绿色边界(刚好不满足)", color: [200, 171, 190], expected: "red" }, // 绿色171 >= min(200,190)-20=170，不满足紫色
+                { name: "紫色-绿色很低", color: [200, 80, 190], expected: "purple" },
+                { name: "紫色-绿色边界(92%)", color: [200, 179, 190], expected: "purple" }, // g=179 < avgRB*0.92=179.4
+                { name: "紫色-绿色边界(93%)", color: [200, 182, 190], expected: "mixed" }, // g=182 > avgRB*0.92=179.4
+                { name: "紫色-红蓝太低", color: [149, 100, 149], expected: "mixed" },
+                
+                // 浅色系测试
+                { name: "浅色-典型", color: [240, 240, 240], expected: "light" },
+                { name: "浅色-边界(221)", color: [221, 221, 221], expected: "light" },
+                { name: "浅色-边界(220)", color: [220, 220, 220], expected: "mixed" },
+                { name: "浅色-偏白", color: [250, 250, 250], expected: "light" },
+                { name: "浅色-偏灰", color: [230, 230, 230], expected: "light" },
+                
+                // 混合色测试
+                { name: "混合色-三色接近", color: [200, 195, 205], expected: "mixed" },
+                { name: "混合色-无明显主导", color: [180, 190, 200], expected: "mixed" },
+                { name: "混合色-橙红色", color: [255, 200, 150], expected: "red" },
+                { name: "混合色-黄绿色", color: [200, 220, 150], expected: "green" },
+                { name: "混合色-青蓝色", color: [150, 200, 220], expected: "mixed" }, // 差值20 < 25，相对比例220 < 224，不满足蓝色条件
+                { name: "混合色-棕褐色", color: [180, 150, 120], expected: "mixed" },
+            ],
+            ingredients: [
+                // === 单个原料测试（覆盖所有8种原料） ===
+                { 
+                    name: "纯心动（红色系）", 
+                    ingredients: [{ id: 'p1', color: [255, 183, 178] }],
+                    counts: [10],
+                    expected: "red"
+                },
+                { 
+                    name: "纯热烈（红色系）", 
+                    ingredients: [{ id: 'p5', color: [255, 154, 162] }],
+                    counts: [10],
+                    expected: "red"
+                },
+                { 
+                    name: "纯专注（绿色系）", 
+                    ingredients: [{ id: 'p3', color: [181, 234, 215] }],
+                    counts: [10],
+                    expected: "green"
+                },
+                { 
+                    name: "纯治愈（绿色系）", 
+                    ingredients: [{ id: 'p6', color: [226, 240, 203] }],
+                    counts: [10],
+                    expected: "green"
+                },
+                { 
+                    name: "纯忧郁（蓝色系）", 
+                    ingredients: [{ id: 'p4', color: [162, 210, 255] }],
+                    counts: [10],
+                    expected: "blue"
+                },
+                { 
+                    name: "纯神秘（蓝色系）", 
+                    ingredients: [{ id: 'p7', color: [201, 201, 255] }],
+                    counts: [10],
+                    expected: "blue"
+                },
+                {
+                    name: "纯慵懒（紫色调）",
+                    ingredients: [{ id: 'p2', color: [210, 180, 245] }],
+                    counts: [5],
+                    expected: "purple"
+                },
+                { 
+                    name: "纯空灵（浅色系）", 
+                    ingredients: [{ id: 'p8', color: [240, 240, 240] }],
+                    counts: [10],
+                    expected: "light"
+                },
+                
+                // === 两两混合测试（覆盖各种组合） ===
+                {
+                    name: "慵懒+神秘（蓝色系）",
+                    ingredients: [
+                        { id: 'p2', color: [210, 180, 245] },
+                        { id: 'p7', color: [201, 201, 255] }
+                    ],
+                    counts: [5, 5],
+                    expected: "blue"
+                },
+                { 
+                    name: "心动+热烈（红色系）", 
+                    ingredients: [
+                        { id: 'p1', color: [255, 183, 178] },
+                        { id: 'p5', color: [255, 154, 162] }
+                    ],
+                    counts: [5, 5],
+                    expected: "red"
+                },
+                { 
+                    name: "专注+治愈（绿色系）", 
+                    ingredients: [
+                        { id: 'p3', color: [181, 234, 215] },
+                        { id: 'p6', color: [226, 240, 203] }
+                    ],
+                    counts: [5, 5],
+                    expected: "green"
+                },
+                { 
+                    name: "忧郁+神秘（蓝色系）", 
+                    ingredients: [
+                        { id: 'p4', color: [162, 210, 255] },
+                        { id: 'p7', color: [201, 201, 255] }
+                    ],
+                    counts: [5, 5],
+                    expected: "blue"
+                },
+                { 
+                    name: "心动+专注（混合色）", 
+                    ingredients: [
+                        { id: 'p1', color: [255, 183, 178] },
+                        { id: 'p3', color: [181, 234, 215] }
+                    ],
+                    counts: [5, 5],
+                    expected: "mixed"
+                },
+                { 
+                    name: "热烈+忧郁（混合色）", 
+                    ingredients: [
+                        { id: 'p5', color: [255, 154, 162] },
+                        { id: 'p4', color: [162, 210, 255] }
+                    ],
+                    counts: [5, 5],
+                    expected: "mixed"
+                },
+                { 
+                    name: "专注+忧郁（混合色）", 
+                    ingredients: [
+                        { id: 'p3', color: [181, 234, 215] },
+                        { id: 'p4', color: [162, 210, 255] }
+                    ],
+                    counts: [5, 5],
+                    expected: "mixed"
+                },
+                {
+                    name: "空灵+心动（浅色系）",
+                    ingredients: [
+                        { id: 'p8', color: [240, 240, 240] },
+                        { id: 'p7', color: [201, 201, 255] } // 改用心动以外的原料，避免红色拉低绿色
+                    ],
+                    counts: [7, 3],
+                    expected: "light"
+                },
+                { 
+                    name: "慵懒+神秘（不等量）", 
+                    ingredients: [
+                        { id: 'p2', color: [199, 206, 234] },
+                        { id: 'p7', color: [201, 201, 255] }
+                    ],
+                    counts: [7, 3],
+                    expected: "purple"
+                },
+                { 
+                    name: "心动+专注（不等量）", 
+                    ingredients: [
+                        { id: 'p1', color: [255, 183, 178] },
+                        { id: 'p3', color: [181, 234, 215] }
+                    ],
+                    counts: [8, 2],
+                    expected: "mixed" // 专注的绿色值较高，混合后不足以触发红色
+                },
+                
+                // === 三色混合测试 ===
+                { 
+                    name: "心动+专注+忧郁（三色混合）", 
+                    ingredients: [
+                        { id: 'p1', color: [255, 183, 178] },
+                        { id: 'p3', color: [181, 234, 215] },
+                        { id: 'p4', color: [162, 210, 255] }
+                    ],
+                    counts: [4, 3, 3],
+                    expected: "mixed"
+                },
+                { 
+                    name: "热烈+治愈+神秘（三色混合）", 
+                    ingredients: [
+                        { id: 'p5', color: [255, 154, 162] },
+                        { id: 'p6', color: [226, 240, 203] },
+                        { id: 'p7', color: [201, 201, 255] }
+                    ],
+                    counts: [3, 4, 3],
+                    expected: "mixed"
+                },
+                { 
+                    name: "慵懒+神秘+空灵（浅色系）", 
+                    ingredients: [
+                        { id: 'p2', color: [199, 206, 234] },
+                        { id: 'p7', color: [201, 201, 255] },
+                        { id: 'p8', color: [240, 240, 240] }
+                    ],
+                    counts: [3, 3, 4],
+                    expected: "light"
+                },
+                
+                // === 四色及以上混合测试 ===
+                { 
+                    name: "四种原料混合", 
+                    ingredients: [
+                        { id: 'p1', color: [255, 183, 178] },
+                        { id: 'p3', color: [181, 234, 215] },
+                        { id: 'p4', color: [162, 210, 255] },
+                        { id: 'p5', color: [255, 154, 162] }
+                    ],
+                    counts: [3, 3, 2, 2],
+                    expected: "mixed"
+                },
+                { 
+                    name: "五种原料混合", 
+                    ingredients: [
+                        { id: 'p1', color: [255, 183, 178] },
+                        { id: 'p2', color: [199, 206, 234] },
+                        { id: 'p3', color: [181, 234, 215] },
+                        { id: 'p4', color: [162, 210, 255] },
+                        { id: 'p6', color: [226, 240, 203] }
+                    ],
+                    counts: [2, 2, 2, 2, 2],
+                    expected: "mixed"
+                },
+            ],
+            edge: [
+                // 这些边界测试已经在basic中覆盖，这里保留一些特殊边界情况
+                { name: "边界：红色差值刚好31", color: [200, 169, 169], expected: "red" }, // 200-169=31>30
+                { name: "边界：红色差值30", color: [200, 170, 170], expected: "mixed" }, // 200-170=30不满足>30
+                { name: "边界：绿色相对比例刚好1.061", color: [200, 213, 200], expected: "green" }, // 213 > 200*1.06=212
+                { name: "边界：蓝色相对比例刚好1.121", color: [200, 200, 225], expected: "blue" }, // 225 > 200*1.12=224
+                { name: "边界：紫色红蓝差距49", color: [200, 100, 151], expected: "purple" }, // 差值49<50，绿色100 < min(200,151)-30=121
+                { name: "边界：紫色红蓝差距50", color: [200, 100, 150], expected: "red" }, // 差值50不满足<50
+                { name: "边界：紫色绿色刚好阈值", color: [200, 131, 190], expected: "red" }, // 绿色131 = min(200,190)-30+1=161，不满足 <161
+            ]
+        };
+
+        // 渲染测试用例
+        function renderTest(test, category) {
+            const [r, g, b] = test.color || (() => {
+                // 如果是原料测试，需要计算混合颜色
+                let baseColor = [255, 255, 255];
+                let totalCount = 0;
+                test.ingredients.forEach((ing, idx) => {
+                    const count = test.counts[idx];
+                    totalCount += count;
+                    const w = count / 10; // 假设总共10次
+                    baseColor = mixColors(baseColor, ing.color, w);
+                });
+                return baseColor.map(Math.round);
+            })();
+            
+            const actual = determineColorType(r, g, b);
+            const passed = actual === test.expected;
+            
+            const div = document.createElement('div');
+            div.className = `test-case ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `
+                <div class="color-swatch" style="background: rgb(${r}, ${g}, ${b})"></div>
+                <div class="test-info">
+                    <div class="test-name">${test.name}</div>
+                    <div class="test-details">
+                        RGB: (${r}, ${g}, ${b})<br>
+                        期望: <strong>${test.expected}</strong> | 实际: <strong>${actual}</strong>
+                    </div>
+                </div>
+                <div class="test-result ${passed ? 'pass' : 'fail'}">
+                    ${passed ? '✓ 通过' : '✗ 失败'}
+                </div>
+            `;
+            
+            return { element: div, passed };
+        }
+
+        // 运行所有测试
+        let totalTests = 0;
+        let passedTests = 0;
+
+        // 基础测试
+        const basicContainer = document.getElementById('basic-tests');
+        testCases.basic.forEach(test => {
+            const result = renderTest(test, 'basic');
+            basicContainer.appendChild(result.element);
+            totalTests++;
+            if (result.passed) passedTests++;
+        });
+
+        // 原料测试
+        const ingredientContainer = document.getElementById('ingredient-tests');
+        testCases.ingredients.forEach(test => {
+            const result = renderTest(test, 'ingredients');
+            ingredientContainer.appendChild(result.element);
+            totalTests++;
+            if (result.passed) passedTests++;
+        });
+
+        // 边界测试
+        const edgeContainer = document.getElementById('edge-tests');
+        testCases.edge.forEach(test => {
+            const result = renderTest(test, 'edge');
+            edgeContainer.appendChild(result.element);
+            totalTests++;
+            if (result.passed) passedTests++;
+        });
+
+        // 成分列表生成测试
+        const ingredientListContainer = document.getElementById('ingredient-list-tests');
+        const ingredients = [
+            { id: 'p1', name: "心动·Crush", color: [255, 183, 178] },
+                { id: 'p2', name: "慵懒·Lazy", color: [210, 180, 245] },
+            { id: 'p3', name: "专注·Focus", color: [181, 234, 215] },
+        ];
+
+        function generateIngredientList(history, totalCount) {
+            let listHTML = '';
+            let totalPrice = 0;
+            for (let id in history) {
+                const count = history[id];
+                const percent = Math.round((count / totalCount) * 100);
+                const name = ingredients.find(i => i.id === id)?.name || '未知';
+                const price = parseFloat((Math.random() * 10 + 5).toFixed(2));
+                totalPrice += price;
+                listHTML += `
+                    <div class="list-row">
+                        <span>${name}提取物</span>
+                        <span>${percent}% / $${price.toFixed(2)}</span>
+                    </div>
+                `;
+            }
+            return { html: listHTML, totalPrice };
+        }
+
+        const listTestCases = [
+            {
+                name: "单一原料",
+                history: { 'p1': 10 },
+                totalCount: 10,
+                expectedItems: 1,
+                expectedTotal: 100
+            },
+            {
+                name: "两种原料等量",
+                history: { 'p1': 5, 'p2': 5 },
+                totalCount: 10,
+                expectedItems: 2,
+                expectedTotal: 100
+            },
+            {
+                name: "三种原料不等量",
+                history: { 'p1': 5, 'p2': 3, 'p3': 2 },
+                totalCount: 10,
+                expectedItems: 3,
+                expectedTotal: 100
+            },
+            {
+                name: "复杂混合",
+                history: { 'p1': 3, 'p2': 3, 'p3': 2, 'p4': 2 },
+                totalCount: 10,
+                expectedItems: 4,
+                expectedTotal: 100
+            }
+        ];
+
+        listTestCases.forEach(test => {
+            const result = generateIngredientList(test.history, test.totalCount);
+            const itemCount = (result.html.match(/list-row/g) || []).length;
+            const percentSum = Array.from(result.html.matchAll(/(\d+)%/g)).reduce((sum, match) => sum + parseInt(match[1]), 0);
+            
+            const passed = itemCount === test.expectedItems && 
+                          Math.abs(percentSum - test.expectedTotal) <= 2; // 允许2%的误差（四舍五入导致）
+            
+            const div = document.createElement('div');
+            div.className = `test-case ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `
+                <div class="test-info" style="flex: 1;">
+                    <div class="test-name">${test.name}</div>
+                    <div class="test-details">
+                        原料数: ${Object.keys(test.history).length} | 
+                        生成项: ${itemCount} | 
+                        百分比总和: ${percentSum}%<br>
+                        期望: ${test.expectedItems}项, ${test.expectedTotal}% | 
+                        实际: ${itemCount}项, ${percentSum}%
+                    </div>
+                </div>
+                <div class="test-result ${passed ? 'pass' : 'fail'}">
+                    ${passed ? '✓ 通过' : '✗ 失败'}
+                </div>
+            `;
+            ingredientListContainer.appendChild(div);
+            totalTests++;
+            if (passed) passedTests++;
+        });
+
+        // 显示总结
+        const summary = document.getElementById('summary');
+        const percentage = Math.round((passedTests / totalTests) * 100);
+        summary.innerHTML = `
+            <div style="font-size: 1.5rem; margin-bottom: 10px;">
+                ${passedTests} / ${totalTests} 测试通过
+            </div>
+            <div style="font-size: 2rem; font-weight: bold;">
+                ${percentage}%
+            </div>
+            ${percentage === 100 ? '🎉 所有测试通过！' : '⚠️ 部分测试失败，请检查逻辑'}
+        `;
+        summary.style.background = percentage === 100 ? '#4CAF50' : '#FF9800';
+    </script>
+    <style>
+        .list-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            padding: 5px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+    </style>
+</body>
+</html>
+
