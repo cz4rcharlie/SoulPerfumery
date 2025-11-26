@@ -1,0 +1,73 @@
+{
+    "name": "Soul Perfumery 灵魂调香室",
+    "short_name": "灵魂调香室",
+    "description": "一款治愈系情绪调香游戏，通过调配心动、慵懒、专注等8种情绪原料，生成专属灵魂香水和治愈小票。",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#F7F5F2",
+    "theme_color": "#F7F5F2",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "zh-CN",
+    "dir": "ltr",
+    "categories": ["games", "entertainment", "lifestyle", "health"],
+    "screenshots": [
+        {
+            "src": "/pics/1.png",
+            "sizes": "1200x630",
+            "type": "image/png",
+            "label": "Soul Perfumery 游戏主界面"
+        },
+        {
+            "src": "/pics/2.png", 
+            "sizes": "1200x630",
+            "type": "image/png",
+            "label": "灵魂小票生成效果"
+        }
+    ],
+    "icons": [
+        {
+            "src": "/favicon-16x16.png",
+            "sizes": "16x16",
+            "type": "image/png"
+        },
+        {
+            "src": "/favicon-32x32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        },
+        {
+            "src": "/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false,
+    "shortcuts": [
+        {
+            "name": "开始调香",
+            "short_name": "调香",
+            "description": "直接开始情绪调香体验",
+            "url": "/",
+            "icons": [
+                {
+                    "src": "/favicon-32x32.png",
+                    "sizes": "32x32"
+                }
+            ]
+        }
+    ]
+}

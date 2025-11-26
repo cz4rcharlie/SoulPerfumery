@@ -1,0 +1,55 @@
+# Soul Perfumery 灵魂调香室 - robots.txt
+
+User-agent: *
+Allow: /
+
+# 主要页面
+Allow: /index.html
+Allow: /README.md
+Allow: /SETUP_GUIDE.md
+Allow: /test-color-logic.html
+
+# 静态资源
+Allow: /assets/
+Allow: /pics/
+Allow: /favicon.ico
+Allow: /apple-touch-icon.png
+Allow: /favicon-32x32.png
+Allow: /favicon-16x16.png
+Allow: /site.webmanifest
+Allow: /browserconfig.xml
+
+# 禁止访问的文件
+Disallow: /note.md
+Disallow: /.git/
+Disallow: /.gitignore
+Disallow: /node_modules/
+Disallow: /package.json
+Disallow: /package-lock.json
+
+# 网站地图
+Sitemap: https://soul-perfumery.top/sitemap.xml
+
+# 爬取延迟（毫秒）
+Crawl-delay: 1
+
+# 特定搜索引擎优化
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 1
+
+User-agent: 360Spider
+Allow: /
+Crawl-delay: 2
+
+User-agent: Sogou web spider
+Allow: /
+Crawl-delay: 2
